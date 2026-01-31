@@ -12,11 +12,11 @@ import os
 def get_config(key, default):
     return os.getenv(key, default)
 
-START_POST_ID = int(get_config("START_POST_ID", 458660))
+START_POST_ID = int(get_config("START_POST_ID", 465000))
 END_POST_ID = int(get_config("END_POST_ID", 100000000))
 CONCURRENT_WORKERS = int(get_config("CONCURRENT_WORKERS", 10))
 DELAY_PER_REQUEST = float(get_config("DELAY_PER_REQUEST", 0.01))
-PAUSE_INTERVAL = int(get_config("PAUSE_INTERVAL", 100))
+PAUSE_INTERVAL = int(get_config("PAUSE_INTERVAL", 50))
 PAUSE_DURATION = int(get_config("PAUSE_DURATION", 2))
 REQUEST_TIMEOUT = int(get_config("REQUEST_TIMEOUT", 30))
 MAX_RETRIES = int(get_config("MAX_RETRIES", 3))
@@ -226,4 +226,5 @@ def main():
         print("🛑 Process was stopped by user.")
 
 if __name__ == "__main__":
+
     main()
