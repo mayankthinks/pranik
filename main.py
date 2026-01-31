@@ -6,7 +6,7 @@ import concurrent.futures
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 # --- Configuration ---
-START_POST_ID = 458660
+START_POST_ID = 465000
 END_POST_ID = 100000000
 CONCURRENT_WORKERS = 10
 DELAY_PER_REQUEST = 0.01
@@ -221,4 +221,5 @@ def main():
         print("🛑 Process was stopped by user.")
 
 if __name__ == "__main__":
+
     main()
