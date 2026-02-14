@@ -12,9 +12,9 @@ import os
 def get_config(key, default):
     return os.getenv(key, default)
 
-START_POST_ID = int(get_config("START_POST_ID", 44459728))
-END_POST_ID = int(get_config("END_POST_ID", 44559728))
-CONCURRENT_WORKERS = int(get_config("CONCURRENT_WORKERS", 6))
+START_POST_ID = int(get_config("START_POST_ID", 100))
+END_POST_ID = int(get_config("END_POST_ID", 100000000))
+CONCURRENT_WORKERS = int(get_config("CONCURRENT_WORKERS", 5))
 DELAY_PER_REQUEST = float(get_config("DELAY_PER_REQUEST", 0.1))
 PAUSE_INTERVAL = int(get_config("PAUSE_INTERVAL", 50))
 PAUSE_DURATION = int(get_config("PAUSE_DURATION", 2))
@@ -74,13 +74,10 @@ def send_request_with_retry(post_id):
             
         try:
             fields = {
-                "image": "",
-                "comment": "Jai Bjp",
-                "type": "news-updates",
-                "postid": str(post_id),
-                "title": "",
-                "subcomment": "No",
-                "action": "postcomment",
+                "relationtype": "content",
+                "relationid": str(post_id),
+                "action": "contentshare",
+                "share_platform": "Twitter",
                 "X-Access-Token": X_ACCESS_TOKEN,
                 "addressid": ADDRESS_ID,
                 "deviceid": DEVICE_ID,
@@ -109,44 +106,44 @@ def send_request_with_retry(post_id):
                     json_response = response.json()
                     status = json_response.get("status", "unknown")
                     message = json_response.get("message", "")
-                    print(f"✅ PostID: {post_id} | Status: {response.status_code} | Response: {status} - {message}")
+                    print(f"✅ RelationID: {post_id} | Status: {response.status_code} | Response: {status} - {message}")
                 except:
-                    print(f"✅ PostID: {post_id} | Status: {response.status_code}")
+                    print(f"✅ RelationID: {post_id} | Status: {response.status_code}")
                 return True
                 
             elif response.status_code == 429:
                 # Rate limited - wait longer before retry
                 wait_time = (2 ** attempt) * 2
-                print(f"⏳ PostID: {post_id} | Rate limited. Waiting {wait_time}s before retry...")
+                print(f"⏳ RelationID: {post_id} | Rate limited. Waiting {wait_time}s before retry...")
                 time.sleep(wait_time)
                 continue
                 
             elif response.status_code >= 500:
                 # Server error - retry with backoff
                 wait_time = 2 ** attempt
-                print(f"🔄 PostID: {post_id} | Server error {response.status_code}. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
+                print(f"🔄 RelationID: {post_id} | Server error {response.status_code}. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
                 time.sleep(wait_time)
                 continue
                 
             else:
-                print(f"❌ PostID: {post_id} | Failed with status: {response.status_code}")
+                print(f"❌ RelationID: {post_id} | Failed with status: {response.status_code}")
                 return False
             
         except requests.exceptions.Timeout:
             wait_time = 2 ** attempt
-            print(f"⏱️  PostID: {post_id} | Timeout. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
+            print(f"⏱️  RelationID: {post_id} | Timeout. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
             time.sleep(wait_time)
             
         except requests.exceptions.ConnectionError as e:
             wait_time = 2 ** attempt
-            print(f"🔌 PostID: {post_id} | Connection error. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
+            print(f"🔌 RelationID: {post_id} | Connection error. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
             time.sleep(wait_time)
             
         except Exception as e:
-            print(f"❌ PostID: {post_id} | Error: {e}")
+            print(f"❌ RelationID: {post_id} | Error: {e}")
             return False
     
-    print(f"❌ PostID: {post_id} | Failed after {MAX_RETRIES} retries")
+    print(f"❌ RelationID: {post_id} | Failed after {MAX_RETRIES} retries")
     return False
 
 def main():
@@ -226,10 +223,4 @@ def main():
         print("🛑 Process was stopped by user.")
 
 if __name__ == "__main__":
-
     main()
-
-
-
-
-
