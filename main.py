@@ -12,12 +12,12 @@ import os
 def get_config(key, default):
     return os.getenv(key, default)
 
-START_POST_ID = int(get_config("START_POST_ID", 6000))
+START_POST_ID = int(get_config("START_POST_ID", 9000))
 END_POST_ID = int(get_config("END_POST_ID", 100000000))
 CONCURRENT_WORKERS = int(get_config("CONCURRENT_WORKERS", 10))
 DELAY_PER_REQUEST = float(get_config("DELAY_PER_REQUEST", 0.1))
 PAUSE_INTERVAL = int(get_config("PAUSE_INTERVAL", 50))
-PAUSE_DURATION = int(get_config("PAUSE_DURATION", 0.1))
+PAUSE_DURATION = int(get_config("PAUSE_DURATION", 1))
 REQUEST_TIMEOUT = int(get_config("REQUEST_TIMEOUT", 30))
 MAX_RETRIES = int(get_config("MAX_RETRIES", 3))
 
@@ -224,5 +224,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
