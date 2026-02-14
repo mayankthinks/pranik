@@ -12,12 +12,12 @@ import os
 def get_config(key, default):
     return os.getenv(key, default)
 
-START_POST_ID = int(get_config("START_POST_ID", 9000))
-END_POST_ID = int(get_config("END_POST_ID", 100000000))
-CONCURRENT_WORKERS = int(get_config("CONCURRENT_WORKERS", 5))
+START_MISSION_ID = int(get_config("START_MISSION_ID", 1))
+END_MISSION_ID = int(get_config("END_MISSION_ID", 100000010000))
+CONCURRENT_WORKERS = int(get_config("CONCURRENT_WORKERS", 10))
 DELAY_PER_REQUEST = float(get_config("DELAY_PER_REQUEST", 0.1))
 PAUSE_INTERVAL = int(get_config("PAUSE_INTERVAL", 80))
-PAUSE_DURATION = int(get_config("PAUSE_DURATION", 1))
+PAUSE_DURATION = int(get_config("PAUSE_DURATION", 0.2))
 REQUEST_TIMEOUT = int(get_config("REQUEST_TIMEOUT", 30))
 MAX_RETRIES = int(get_config("MAX_RETRIES", 3))
 
@@ -61,7 +61,7 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-def send_request_with_retry(post_id):
+def send_request_with_retry(mission_id):
     """Send request with retry logic and exponential backoff"""
     global shutdown_requested
     
@@ -74,10 +74,9 @@ def send_request_with_retry(post_id):
             
         try:
             fields = {
-                "relationtype": "content",
-                "relationid": str(post_id),
-                "action": "contentshare",
-                "share_platform": "Twitter",
+                "missionid": str(mission_id),
+                "missiontype": "share",
+                "action": "completemission",
                 "X-Access-Token": X_ACCESS_TOKEN,
                 "addressid": ADDRESS_ID,
                 "deviceid": DEVICE_ID,
@@ -106,50 +105,50 @@ def send_request_with_retry(post_id):
                     json_response = response.json()
                     status = json_response.get("status", "unknown")
                     message = json_response.get("message", "")
-                    print(f"✅ RelationID: {post_id} | Status: {response.status_code} | Response: {status} - {message}")
+                    print(f"✅ MissionID: {mission_id} | Status: {response.status_code} | Response: {status} - {message}")
                 except:
-                    print(f"✅ RelationID: {post_id} | Status: {response.status_code}")
+                    print(f"✅ MissionID: {mission_id} | Status: {response.status_code}")
                 return True
                 
             elif response.status_code == 429:
                 # Rate limited - wait longer before retry
                 wait_time = (2 ** attempt) * 2
-                print(f"⏳ RelationID: {post_id} | Rate limited. Waiting {wait_time}s before retry...")
+                print(f"⏳ MissionID: {mission_id} | Rate limited. Waiting {wait_time}s before retry...")
                 time.sleep(wait_time)
                 continue
                 
             elif response.status_code >= 500:
                 # Server error - retry with backoff
                 wait_time = 2 ** attempt
-                print(f"🔄 RelationID: {post_id} | Server error {response.status_code}. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
+                print(f"🔄 MissionID: {mission_id} | Server error {response.status_code}. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
                 time.sleep(wait_time)
                 continue
                 
             else:
-                print(f"❌ RelationID: {post_id} | Failed with status: {response.status_code}")
+                print(f"❌ MissionID: {mission_id} | Failed with status: {response.status_code}")
                 return False
             
         except requests.exceptions.Timeout:
             wait_time = 2 ** attempt
-            print(f"⏱️  RelationID: {post_id} | Timeout. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
+            print(f"⏱️  MissionID: {mission_id} | Timeout. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
             time.sleep(wait_time)
             
         except requests.exceptions.ConnectionError as e:
             wait_time = 2 ** attempt
-            print(f"🔌 RelationID: {post_id} | Connection error. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
+            print(f"🔌 MissionID: {mission_id} | Connection error. Retry {attempt}/{MAX_RETRIES} in {wait_time}s...")
             time.sleep(wait_time)
             
         except Exception as e:
-            print(f"❌ RelationID: {post_id} | Error: {e}")
+            print(f"❌ MissionID: {mission_id} | Error: {e}")
             return False
     
-    print(f"❌ RelationID: {post_id} | Failed after {MAX_RETRIES} retries")
+    print(f"❌ MissionID: {mission_id} | Failed after {MAX_RETRIES} retries")
     return False
 
 def main():
     global shutdown_requested
     
-    print(f"🚀 Starting process from {START_POST_ID} to {END_POST_ID}...")
+    print(f"🚀 Starting process from {START_MISSION_ID} to {END_MISSION_ID}...")
     print(f"📊 Config: {CONCURRENT_WORKERS} workers, {DELAY_PER_REQUEST}s delay, pause every {PAUSE_INTERVAL} requests")
     print(f"🔄 Max retries: {MAX_RETRIES}, Timeout: {REQUEST_TIMEOUT}s")
     print("-" * 60)
@@ -162,13 +161,13 @@ def main():
         with concurrent.futures.ThreadPoolExecutor(max_workers=CONCURRENT_WORKERS) as executor:
             futures = {}
             
-            for post_id in range(START_POST_ID, END_POST_ID + 1):
+            for mission_id in range(START_MISSION_ID, END_MISSION_ID + 1):
                 if shutdown_requested:
                     break
                 
                 # Submit task
-                future = executor.submit(send_request_with_retry, post_id)
-                futures[future] = post_id
+                future = executor.submit(send_request_with_retry, mission_id)
+                futures[future] = mission_id
                 
                 # Limit pending futures to prevent memory issues
                 if len(futures) >= CONCURRENT_WORKERS * 2:
@@ -224,7 +223,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
